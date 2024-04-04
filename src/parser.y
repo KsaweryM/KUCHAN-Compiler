@@ -2,6 +2,7 @@
     #include "include/AST.hpp"
     #include "include/BinaryExpressionAST.hpp"
     #include "include/NumberAST.hpp"
+    #include "include/VariableAST.hpp"
     #include <iostream>
     #include <string>
     #include <memory>
@@ -17,6 +18,7 @@
     AST* ast;
     int integer;
     char binary_operator;
+    std::string* text;
     int token;
 }
 
@@ -25,6 +27,7 @@
 %left <binary_operator>    TOKEN_ADDITION TOKEN_SUBTRACTION
 %left <binary_operator>    TOKEN_MULTIPLICATION TOKEN_DIVISION
 %token <token>             TOKEN_END TOKEN_ERROR
+%token <text>              TOKEN_VARIABLE;
 
 // nonterminal symbols:
 %type <ast>             input
@@ -38,7 +41,7 @@ input:          %empty { }
                 | input line TOKEN_END { }
 ;
 
-line:           expression { $$ = $1; delete $$; }
+line:           expression { $$ = $1; std::cout << *$$ << std::endl; delete $$; }
 ;
 
 expression:     value { $$ = $1; }
@@ -53,7 +56,10 @@ operator:       TOKEN_MULTIPLICATION { $$ = $1; }
                 | TOKEN_SUBTRACTION  { $$ = $1; }
 ;
 
-value:          TOKEN_NUMBER { $$ = new NumberAST($1); }
+value:          TOKEN_NUMBER     { $$ = new NumberAST($1);                                 }
+                | TOKEN_VARIABLE { $$ = new VariableAST(std::unique_ptr<std::string>($1)); }
+;
+
 %%
 
 void yyerror(const char* error) {

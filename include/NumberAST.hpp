@@ -8,9 +8,9 @@ class NumberAST : public AST {
   int number;
 
 public:
-  NumberAST(double number) : number(number) {
-    std::cout << "NumberAST(" << number << ") has been created." << std::endl;
-  }
+  NumberAST(double number) : number(number) { }
+
+  void print(std::ostream& os) const override;
 };
 
 #endif

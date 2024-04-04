@@ -13,10 +13,9 @@ public:
   BinaryExpressionAST(char op,
                      std::unique_ptr<AST> leftAST,
                      std::unique_ptr<AST> rightAST)
-                     : op(op), leftAST(std::move(leftAST)), rightAST(std::move(rightAST)) {
-    std::cout << "BinaryOperationAST(" << op << ", leftAST, rightAST) has been created." << std::endl;
+                     : op(op), leftAST(std::move(leftAST)), rightAST(std::move(rightAST)) { }
 
-  }
+  void print(std::ostream& os) const override;
 };
 
 #endif
