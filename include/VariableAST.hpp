@@ -11,6 +11,7 @@ class VariableAST : public AST {
 public:
   VariableAST(std::unique_ptr<std::string> variableName) : variableName(std::move(variableName)) { }
 
+protected:
   void print(std::ostream& os) const override;
 };
 

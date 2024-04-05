@@ -15,6 +15,7 @@ public:
                      std::unique_ptr<AST> rightAST)
                      : op(op), leftAST(std::move(leftAST)), rightAST(std::move(rightAST)) { }
 
+protected:
   void print(std::ostream& os) const override;
 };
 
