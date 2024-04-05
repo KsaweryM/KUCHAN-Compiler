@@ -4,6 +4,7 @@
     #include "include/LLVMResourcesHolder.hpp"
     #include "include/NumberAST.hpp"
     #include "include/VariableAST.hpp"
+    #include <llvm/IR/Verifier.h>
     #include <iostream>
     #include <string>
     #include <memory>
@@ -26,6 +27,11 @@
 }
 
 // terminal symbols:
+%token <token>             TOKEN_VAR
+%token <token>             TOKEN_BEGIN
+%token <token>             TOKEN_COMMA
+%token <token>             TOKEN_SEMICOLON
+%token <token>             TOKEN_ASSIGN
 %token <integer>           TOKEN_NUMBER
 %left <binary_operator>    TOKEN_ADDITION TOKEN_SUBTRACTION
 %left <binary_operator>    TOKEN_MULTIPLICATION TOKEN_DIVISION
@@ -34,17 +40,37 @@
 
 // nonterminal symbols:
 %type <ast>             program
-%type <ast>             line
+%type <ast>             declarations
+%type <ast>             commands
+%type <ast>             command
 %type <ast>             expression
 %type <binary_operator> operator
 %type <ast>             value
 
 %%
-program:          %empty { }
-                | program line TOKEN_END { }
+
+program:          TOKEN_VAR declarations TOKEN_BEGIN commands TOKEN_END { }
+                | TOKEN_BEGIN commands TOKEN_END { }
 ;
 
-line:           expression { $$ = $1; std::cout << *$$ << std::endl; delete $$; }
+declarations:     declarations TOKEN_COMMA TOKEN_VARIABLE { }
+                | TOKEN_VARIABLE { }
+;
+
+commands:         commands command { }
+                | command { }
+;
+
+command:         TOKEN_VARIABLE TOKEN_ASSIGN expression TOKEN_SEMICOLON { }
+                | expression TOKEN_SEMICOLON { // Temporary.
+                                               llvm::FunctionType *funcType = llvm::FunctionType::get(llvm::Type::getVoidTy(LLVMResources->context), false);
+                                               llvm::Function *mainFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", LLVMResources->module);
+                                               llvm::BasicBlock *testBlock = llvm::BasicBlock::Create(LLVMResources->context, "testBlock", mainFunc);
+                                               LLVMResources->builder.SetInsertPoint(testBlock);
+                                               LLVMResources->builder.CreateRetVoid();
+                                               LLVMResources->builder.Insert($1->create_code());
+                                               llvm::verifyFunction(*mainFunc);
+                                             }
 ;
 
 expression:     value { $$ = $1; }

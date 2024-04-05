@@ -13,9 +13,14 @@ struct LLVMResourcesHolder {
     llvm::LLVMContext context;
     llvm::Module module;
     llvm::IRBuilder<> builder;
-    std::map<std::string, llvm::Value *> namedValues;
 
     LLVMResourcesHolder() : module("KUCHAN Main module.", context), builder(context) { }
+
+    // Temporary function.
+    void print()
+    {
+        module.print(llvm::outs(), nullptr);
+    }
 };
 
 #endif
