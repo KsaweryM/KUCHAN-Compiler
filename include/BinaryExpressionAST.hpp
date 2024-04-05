@@ -10,10 +10,15 @@ class BinaryExpressionAST : public AST {
   std::unique_ptr<AST> leftAST, rightAST;
 
 public:
-  BinaryExpressionAST(char op,
-                     std::unique_ptr<AST> leftAST,
-                     std::unique_ptr<AST> rightAST)
-                     : op(op), leftAST(std::move(leftAST)), rightAST(std::move(rightAST)) { }
+  BinaryExpressionAST(std::shared_ptr<LLVMResourcesHolder> LLVMResources,
+                      char op,
+                      std::unique_ptr<AST> leftAST,
+                      std::unique_ptr<AST> rightAST)
+                      : AST(LLVMResources), op(op),
+                        leftAST(std::move(leftAST)),
+                        rightAST(std::move(rightAST)) { }
+
+virtual llvm::Value* create_code() override;
 
 protected:
   void print(std::ostream& os) const override;

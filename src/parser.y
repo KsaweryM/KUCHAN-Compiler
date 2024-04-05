@@ -1,6 +1,7 @@
 %{
     #include "include/AST.hpp"
     #include "include/BinaryExpressionAST.hpp"
+    #include "include/LLVMResourcesHolder.hpp"
     #include "include/NumberAST.hpp"
     #include "include/VariableAST.hpp"
     #include <iostream>
@@ -11,6 +12,8 @@
     extern int yyparse();
     extern int yylex_destroy();
     void yyerror(const char*);
+
+    std::shared_ptr<LLVMResourcesHolder> LLVMResources;
 %}
 
 %union
@@ -30,22 +33,23 @@
 %token <text>              TOKEN_VARIABLE;
 
 // nonterminal symbols:
-%type <ast>             input
+%type <ast>             program
 %type <ast>             line
 %type <ast>             expression
 %type <binary_operator> operator
 %type <ast>             value
 
 %%
-input:          %empty { }
-                | input line TOKEN_END { }
+program:          %empty { }
+                | program line TOKEN_END { }
 ;
 
 line:           expression { $$ = $1; std::cout << *$$ << std::endl; delete $$; }
 ;
 
 expression:     value { $$ = $1; }
-                | expression operator expression { $$ = new BinaryExpressionAST($2,
+                | expression operator expression { $$ = new BinaryExpressionAST(LLVMResources,
+                                                                                $2,
                                                                                 std::unique_ptr<AST>($1),
                                                                                 std::unique_ptr<AST>($3)); }
 ;
@@ -56,8 +60,8 @@ operator:       TOKEN_MULTIPLICATION { $$ = $1; }
                 | TOKEN_SUBTRACTION  { $$ = $1; }
 ;
 
-value:          TOKEN_NUMBER     { $$ = new NumberAST($1);                                 }
-                | TOKEN_VARIABLE { $$ = new VariableAST(std::unique_ptr<std::string>($1)); }
+value:          TOKEN_NUMBER     { $$ = new NumberAST(LLVMResources, $1);                                 }
+                | TOKEN_VARIABLE { $$ = new VariableAST(LLVMResources, std::unique_ptr<std::string>($1)); }
 ;
 
 %%
@@ -67,7 +71,13 @@ void yyerror(const char* error) {
 }
 
 int main() {
+    LLVMResources = std::make_shared<LLVMResourcesHolder>();
+
     yyparse();
+
+    LLVMResources->module.print(llvm::errs(), nullptr);
+
     yylex_destroy();
+
     return 0;
 }
