@@ -13,8 +13,13 @@ struct LLVMResourcesHolder {
     llvm::LLVMContext context;
     llvm::Module module;
     llvm::IRBuilder<> builder;
+    llvm::Function* mainFunction;
+    std::map<std::string, llvm::AllocaInst*> variables;
 
-    LLVMResourcesHolder() : module("KUCHAN Main module.", context), builder(context) { }
+    LLVMResourcesHolder() : module("KUCHAN Main module.", context), builder(context) {
+        mainFunction = llvm::Function::Create(llvm::FunctionType::get(llvm::Type::getVoidTy(context), false), llvm::Function::ExternalLinkage, "main", module);
+        builder.SetInsertPoint(llvm::BasicBlock::Create(context, "firstBasicBlock", mainFunction));
+    }
 
     // Temporary function.
     void print()

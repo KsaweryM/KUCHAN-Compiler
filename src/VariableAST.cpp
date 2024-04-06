@@ -1,26 +1,15 @@
 #include "include/VariableAST.hpp"
+#include <cassert>
 
 llvm::Value* VariableAST::create_code()
 {
-    llvm::GlobalVariable* globalVariable = LLVMResources->module.getGlobalVariable(*variableName);
+    llvm::AllocaInst* variable = LLVMResources->variables[variableName];
+    assert(variable);
 
-    if (globalVariable == nullptr)
-    {
-        globalVariable = new llvm::GlobalVariable(
-            llvm::Type::getInt32Ty(LLVMResources->context),
-            false,
-            llvm::GlobalValue::ExternalLinkage,
-            0,
-            *variableName
-        );
-
-        LLVMResources->module.insertGlobalVariable(globalVariable);
-    }
-
-    return globalVariable;
+    return LLVMResources->builder.CreateLoad(variable->getAllocatedType(), variable, variableName.c_str());;
 }
 
 void VariableAST::print(std::ostream& os) const
 {
-    os << "NumberAST(" << *variableName << ")";
+    os << "NumberAST(" << variableName << ")";
 }

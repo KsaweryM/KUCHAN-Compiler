@@ -6,13 +6,26 @@
 #include <memory>
 
 class VariableAST : public AST {
-  std::unique_ptr<std::string> variableName;
-
 public:
+  std::string variableName;
+
   VariableAST(std::shared_ptr<LLVMResourcesHolder> LLVMResources,
-              std::unique_ptr<std::string> variableName)
+              std::string VariableName)
               : AST(LLVMResources),
-                variableName(std::move(variableName)) { }
+                variableName(std::move(VariableName)) {
+
+    llvm::AllocaInst* variable = LLVMResources->variables[variableName];
+
+    if (variable == nullptr)
+    {
+        llvm::IRBuilder<> temporaryBuilder(&LLVMResources->mainFunction->getEntryBlock(),
+                                            LLVMResources->mainFunction->getEntryBlock().begin());
+        variable = temporaryBuilder.CreateAlloca(llvm::Type::getInt32Ty(LLVMResources->context), nullptr,
+                                                 variableName);
+
+        LLVMResources->variables[variableName] = variable;
+    }
+  }
 
   virtual llvm::Value* create_code() override;
 

@@ -4,7 +4,7 @@ all: build/KUCHAN
 
 build/KUCHAN: build/parser_y.c build/scanner_l.c $(wildcard src/*.cpp)
 	mkdir -p build
-	g++ -I . $^ `llvm-config --cxxflags --ldflags --system-libs --libs core` -lfl -o $@
+	g++ -g -I . $^ `llvm-config --cxxflags --ldflags --system-libs --libs core` -lfl -o $@
 
 build/parser_y.c: src/parser.y
 	mkdir -p build

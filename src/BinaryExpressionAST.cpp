@@ -15,16 +15,16 @@ llvm::Value* BinaryExpressionAST::create_code()
     switch (op)
     {
     case '+':
-        value = LLVMResources->builder.CreateFAdd(left_code, right_code, "addt");
+        value = LLVMResources->builder.CreateAdd(left_code, right_code, "addt");
         break;
     case '-':
-        value = LLVMResources->builder.CreateFSub(left_code, right_code, "sub");
+        value = LLVMResources->builder.CreateSub(left_code, right_code, "sub");
         break;
     case '*':
-        value = LLVMResources->builder.CreateFMul(left_code, right_code, "mul");
+        value = LLVMResources->builder.CreateMul(left_code, right_code, "mul");
         break;
     case '/':
-        value = LLVMResources->builder.CreateFDiv(left_code, right_code, "div");
+        value = LLVMResources->builder.CreateUDiv(left_code, right_code, "div");
         break;
     }
 

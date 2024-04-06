@@ -8,6 +8,7 @@
     #include <iostream>
     #include <string>
     #include <memory>
+    #include <cassert>
 
     extern int yylex();
     extern int yyparse();
@@ -36,7 +37,7 @@
 %left <binary_operator>    TOKEN_ADDITION TOKEN_SUBTRACTION
 %left <binary_operator>    TOKEN_MULTIPLICATION TOKEN_DIVISION
 %token <token>             TOKEN_END TOKEN_ERROR
-%token <text>              TOKEN_VARIABLE;
+%token <text>              TOKEN_VARIABLE_NAME;
 
 // nonterminal symbols:
 %type <ast>             program
@@ -46,6 +47,7 @@
 %type <ast>             expression
 %type <binary_operator> operator
 %type <ast>             value
+%type <ast>             variable
 
 %%
 
@@ -53,24 +55,19 @@ program:          TOKEN_VAR declarations TOKEN_BEGIN commands TOKEN_END { }
                 | TOKEN_BEGIN commands TOKEN_END { }
 ;
 
-declarations:     declarations TOKEN_COMMA TOKEN_VARIABLE { }
-                | TOKEN_VARIABLE { }
+declarations:     declarations TOKEN_COMMA TOKEN_VARIABLE_NAME { }
+                | TOKEN_VARIABLE_NAME { }
 ;
 
 commands:         commands command { }
                 | command { }
 ;
 
-command:         TOKEN_VARIABLE TOKEN_ASSIGN expression TOKEN_SEMICOLON { }
-                | expression TOKEN_SEMICOLON { // Temporary.
-                                               llvm::FunctionType *funcType = llvm::FunctionType::get(llvm::Type::getVoidTy(LLVMResources->context), false);
-                                               llvm::Function *mainFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", LLVMResources->module);
-                                               llvm::BasicBlock *testBlock = llvm::BasicBlock::Create(LLVMResources->context, "testBlock", mainFunc);
-                                               LLVMResources->builder.SetInsertPoint(testBlock);
-                                               LLVMResources->builder.CreateRetVoid();
-                                               LLVMResources->builder.Insert($1->create_code());
-                                               llvm::verifyFunction(*mainFunc);
-                                             }
+command:         variable TOKEN_ASSIGN expression TOKEN_SEMICOLON { VariableAST* variableAST = static_cast<VariableAST*>($1);
+                                                                    llvm::Value* lValue = LLVMResources->variables[variableAST->variableName];
+                                                                    llvm::Value* rValue = $3->create_code();
+                                                                    LLVMResources->builder.CreateStore(rValue, lValue);
+                                                                  }
 ;
 
 expression:     value { $$ = $1; }
@@ -86,8 +83,11 @@ operator:       TOKEN_MULTIPLICATION { $$ = $1; }
                 | TOKEN_SUBTRACTION  { $$ = $1; }
 ;
 
-value:          TOKEN_NUMBER     { $$ = new NumberAST(LLVMResources, $1);                                 }
-                | TOKEN_VARIABLE { $$ = new VariableAST(LLVMResources, std::unique_ptr<std::string>($1)); }
+value:          TOKEN_NUMBER     { $$ = new NumberAST(LLVMResources, $1); }
+                | variable       { $$ = $1;                               }
+;
+
+variable:       TOKEN_VARIABLE_NAME { std::string variableName(*$1); delete $1; $$ = new VariableAST(LLVMResources, variableName); }
 ;
 
 %%
@@ -101,6 +101,7 @@ int main() {
 
     yyparse();
 
+    LLVMResources->builder.CreateRetVoid();
     LLVMResources->module.print(llvm::errs(), nullptr);
 
     yylex_destroy();

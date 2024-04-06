@@ -11,19 +11,19 @@ int yylex();
 %%
 [ \t] ;
 ^#.*\n ;
-"VAR"                { return TOKEN_VAR;                                                     }
-"BEGIN"              { return TOKEN_BEGIN;                                                   }
-"END"                { return TOKEN_END;                                                     }
-","                  { return TOKEN_COMMA;                                                   }
-";"                  { return TOKEN_SEMICOLON;                                               }
-"="                  { return TOKEN_ASSIGN;                                                  }
-"*"                  { yylval.binary_operator = '*'; return TOKEN_MULTIPLICATION;            }
-"/"                  { yylval.binary_operator = '/'; return TOKEN_DIVISION;                  }
-"+"                  { yylval.binary_operator = '+'; return TOKEN_ADDITION;                  }
-"-"                  { yylval.binary_operator = '-'; return TOKEN_SUBTRACTION;               }
-"n"                  { return TOKEN_END;                                                     }
-[0-9]+               { yylval.integer = std::atoi(yytext); return TOKEN_NUMBER;              }
-[A-Za-z][A-Za-z0-9]* { yylval.text = new std::string(yytext, yyleng); return TOKEN_VARIABLE; }
-.                    { return TOKEN_ERROR;                                                   }
+"VAR"                { return TOKEN_VAR;                                                          }
+"BEGIN"              { return TOKEN_BEGIN;                                                        }
+"END"                { return TOKEN_END;                                                          }
+","                  { return TOKEN_COMMA;                                                        }
+";"                  { return TOKEN_SEMICOLON;                                                    }
+"="                  { return TOKEN_ASSIGN;                                                       }
+"*"                  { yylval.binary_operator = '*'; return TOKEN_MULTIPLICATION;                 }
+"/"                  { yylval.binary_operator = '/'; return TOKEN_DIVISION;                       }
+"+"                  { yylval.binary_operator = '+'; return TOKEN_ADDITION;                       }
+"-"                  { yylval.binary_operator = '-'; return TOKEN_SUBTRACTION;                    }
+"n"                  { return TOKEN_END;                                                          }
+[0-9]+               { yylval.integer = std::atoi(yytext); return TOKEN_NUMBER;                   }
+[A-Za-z][A-Za-z0-9]* { yylval.text = new std::string(yytext, yyleng); return TOKEN_VARIABLE_NAME; }
+.                    { return TOKEN_ERROR;                                                        }
 %%
 
