@@ -8,15 +8,13 @@ class NumberAST : public AST {
   int number;
 
 public:
-  NumberAST(std::shared_ptr<LLVMResourcesHolder> LLVMResources,
-            int number)
-            : AST(LLVMResources),
-              number(number) { }
+  NumberAST(std::shared_ptr<LLVMResourcesHolder> LLVMResources, int number)
+      : AST(LLVMResources), number(number) {}
 
-  virtual llvm::Value* create_code() override;
+  virtual llvm::Value *create_code() override;
 
 protected:
-  void print(std::ostream& os) const override;
+  void print(std::ostream &os) const override;
 };
 
 #endif

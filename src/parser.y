@@ -1,5 +1,6 @@
 %{
     #include "include/AST.hpp"
+    #include "include/AssignCommandAST.hpp"
     #include "include/BinaryExpressionAST.hpp"
     #include "include/LLVMResourcesHolder.hpp"
     #include "include/NumberAST.hpp"
@@ -63,10 +64,14 @@ commands:         commands command { }
                 | command { }
 ;
 
-command:         variable TOKEN_ASSIGN expression TOKEN_SEMICOLON { VariableAST* variableAST = static_cast<VariableAST*>($1);
-                                                                    llvm::Value* lValue = LLVMResources->variables[variableAST->variableName];
-                                                                    llvm::Value* rValue = $3->create_code();
-                                                                    LLVMResources->builder.CreateStore(rValue, lValue);
+command:         variable TOKEN_ASSIGN expression TOKEN_SEMICOLON { // Unfortunately, due to the LLVM configuration,
+                                                                    // the use of dynamic_cast is blocked.
+                                                                    // Below is a temporary solution.
+                                                                    auto command = std::make_unique<AssignCommandAST>(LLVMResources,
+                                                                        std::unique_ptr<VariableAST>(reinterpret_cast<VariableAST*>($1)),
+                                                                        std::unique_ptr<BinaryExpressionAST>(reinterpret_cast<BinaryExpressionAST*>($3)));
+
+                                                                    command->create_code();
                                                                   }
 ;
 

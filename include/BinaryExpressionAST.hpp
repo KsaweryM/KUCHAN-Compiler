@@ -2,8 +2,8 @@
 #define BINARY_EXPRESSION_AST_HPP
 
 #include "include/AST.hpp"
-#include <memory>
 #include <iostream>
+#include <memory>
 
 class BinaryExpressionAST : public AST {
   char op;
@@ -11,17 +11,15 @@ class BinaryExpressionAST : public AST {
 
 public:
   BinaryExpressionAST(std::shared_ptr<LLVMResourcesHolder> LLVMResources,
-                      char op,
-                      std::unique_ptr<AST> leftAST,
+                      char op, std::unique_ptr<AST> leftAST,
                       std::unique_ptr<AST> rightAST)
-                      : AST(LLVMResources), op(op),
-                        leftAST(std::move(leftAST)),
-                        rightAST(std::move(rightAST)) { }
+      : AST(LLVMResources), op(op), leftAST(std::move(leftAST)),
+        rightAST(std::move(rightAST)) {}
 
-virtual llvm::Value* create_code() override;
+  virtual llvm::Value *create_code() override;
 
 protected:
-  void print(std::ostream& os) const override;
+  void print(std::ostream &os) const override;
 };
 
 #endif
