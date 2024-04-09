@@ -1,5 +1,6 @@
 %{
 #include "include/AST.hpp"
+#include "include/CommandAST.hpp"
 #include <string>
 #include "parser_y.h"
 
@@ -11,6 +12,12 @@ int yylex();
 %%
 [ \t] ;
 ^#.*\n ;
+"IF"                 { return TOKEN_IF;                                                           }
+"THEN"               { return TOKEN_THEN;                                                         }
+"ELSE"               { return TOKEN_ELSE;                                                         }
+"FI"                 { return TOKEN_END_IF;                                                       }
+"TRUE"               { return TOKEN_TRUE;                                                         }
+"FALSE"              { return TOKEN_FALSE;                                                        }
 "VAR"                { return TOKEN_VAR;                                                          }
 "BEGIN"              { return TOKEN_BEGIN;                                                        }
 "END"                { return TOKEN_END;                                                          }

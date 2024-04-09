@@ -2,6 +2,8 @@
     #include "include/AST.hpp"
     #include "include/AssignCommandAST.hpp"
     #include "include/BinaryExpressionAST.hpp"
+    #include "include/CommandAST.hpp"
+    #include "include/ConditionalCommandAST.hpp"
     #include "include/LLVMResourcesHolder.hpp"
     #include "include/NumberAST.hpp"
     #include "include/VariableAST.hpp"
@@ -21,6 +23,7 @@
 
 %union
 {
+    CommandAST* command;
     AST* ast;
     int integer;
     char binary_operator;
@@ -29,6 +32,12 @@
 }
 
 // terminal symbols:
+%token <token>             TOKEN_IF
+%token <token>             TOKEN_THEN
+%token <token>             TOKEN_ELSE
+%token <token>             TOKEN_END_IF
+%token <token>             TOKEN_TRUE
+%token <token>             TOKEN_FALSE
 %token <token>             TOKEN_VAR
 %token <token>             TOKEN_BEGIN
 %token <token>             TOKEN_COMMA
@@ -43,8 +52,8 @@
 // nonterminal symbols:
 %type <ast>             program
 %type <ast>             declarations
-%type <ast>             commands
-%type <ast>             command
+%type <command>         commands
+%type <command>         command
 %type <ast>             expression
 %type <binary_operator> operator
 %type <ast>             value
@@ -64,18 +73,29 @@ commands:         commands command { }
                 | command { }
 ;
 
-command:         variable TOKEN_ASSIGN expression TOKEN_SEMICOLON { // Unfortunately, due to the LLVM configuration,
-                                                                    // the use of dynamic_cast is blocked.
-                                                                    // Below is a temporary solution.
-                                                                    auto command = std::make_unique<AssignCommandAST>(LLVMResources,
-                                                                        std::unique_ptr<VariableAST>(reinterpret_cast<VariableAST*>($1)),
-                                                                        std::unique_ptr<BinaryExpressionAST>(reinterpret_cast<BinaryExpressionAST*>($3)));
+command:          variable TOKEN_ASSIGN expression TOKEN_SEMICOLON  {   // Unfortunately, due to the LLVM configuration,
+                                                                        // the use of dynamic_cast is blocked.
+                                                                        // Below is a temporary solution.
+                                                                        $$ = new AssignCommandAST(LLVMResources,
+                                                                            std::unique_ptr<VariableAST>(reinterpret_cast<VariableAST*>($1)),
+                                                                            std::unique_ptr<BinaryExpressionAST>(reinterpret_cast<BinaryExpressionAST*>($3)));
 
-                                                                    command->create_code();
-                                                                  }
+                                                                        $$->parse();
+                                                                    }
+                | TOKEN_IF expression TOKEN_THEN
+                    command
+                  TOKEN_ELSE
+                    command
+                  TOKEN_END_IF                                      {   $$ = new ConditionalCommandAST(LLVMResources,
+                                                                            std::unique_ptr<BinaryExpressionAST>(reinterpret_cast<BinaryExpressionAST*>($2)),
+                                                                            std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($4)),
+                                                                            std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($6)));
+
+                                                                        $$->parse();
+                                                                    }
 ;
 
-expression:     value { $$ = $1; }
+expression:       value { $$ = $1; }
                 | expression operator expression { $$ = new BinaryExpressionAST(LLVMResources,
                                                                                 $2,
                                                                                 std::unique_ptr<AST>($1),

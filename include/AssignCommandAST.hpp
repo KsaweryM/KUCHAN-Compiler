@@ -13,7 +13,7 @@ public:
       : CommandAST(LLVMResources), variableAST(std::move(variableAST)),
         expressionAST(std::move(expressionAST)) {}
 
-  virtual llvm::Value *create_code() override;
+  virtual void parse() override;
 
 private:
   std::unique_ptr<VariableAST> variableAST;

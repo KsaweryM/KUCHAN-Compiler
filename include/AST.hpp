@@ -10,9 +10,7 @@
 class AST {
 public:
   AST(std::shared_ptr<LLVMResourcesHolder> LLVMResources)
-      : LLVMResources(LLVMResources) {
-    assert(LLVMResources);
-  }
+      : LLVMResources(LLVMResources) {}
 
   virtual ~AST() = default;
 
