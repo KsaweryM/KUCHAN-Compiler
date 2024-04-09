@@ -23,6 +23,7 @@ int yylex();
 "END"                { return TOKEN_END;                                                          }
 ","                  { return TOKEN_COMMA;                                                        }
 ";"                  { return TOKEN_SEMICOLON;                                                    }
+"=="                 { return TOKEN_EQUALITY;                                                     }
 "="                  { return TOKEN_ASSIGN;                                                       }
 "*"                  { yylval.binary_operator = '*'; return TOKEN_MULTIPLICATION;                 }
 "/"                  { yylval.binary_operator = '/'; return TOKEN_DIVISION;                       }

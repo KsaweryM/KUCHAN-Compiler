@@ -6,6 +6,7 @@
     #include "include/ConditionalCommandAST.hpp"
     #include "include/LLVMResourcesHolder.hpp"
     #include "include/NumberAST.hpp"
+    #include "include/ConditionAST.hpp"
     #include "include/VariableAST.hpp"
     #include <llvm/IR/Verifier.h>
     #include <iostream>
@@ -42,6 +43,7 @@
 %token <token>             TOKEN_BEGIN
 %token <token>             TOKEN_COMMA
 %token <token>             TOKEN_SEMICOLON
+%token <token>             TOKEN_EQUALITY
 %token <token>             TOKEN_ASSIGN
 %token <integer>           TOKEN_NUMBER
 %left <binary_operator>    TOKEN_ADDITION TOKEN_SUBTRACTION
@@ -54,6 +56,7 @@
 %type <ast>             declarations
 %type <command>         commands
 %type <command>         command
+%type <ast>             condition
 %type <ast>             expression
 %type <binary_operator> operator
 %type <ast>             value
@@ -82,12 +85,12 @@ command:          variable TOKEN_ASSIGN expression TOKEN_SEMICOLON  {   // Unfor
 
                                                                         $$->parse();
                                                                     }
-                | TOKEN_IF expression TOKEN_THEN
+                | TOKEN_IF condition TOKEN_THEN
                     command
                   TOKEN_ELSE
                     command
                   TOKEN_END_IF                                      {   $$ = new ConditionalCommandAST(LLVMResources,
-                                                                            std::unique_ptr<BinaryExpressionAST>(reinterpret_cast<BinaryExpressionAST*>($2)),
+                                                                            std::unique_ptr<ConditionAST>(reinterpret_cast<ConditionAST*>($2)),
                                                                             std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($4)),
                                                                             std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($6)));
 
@@ -95,11 +98,18 @@ command:          variable TOKEN_ASSIGN expression TOKEN_SEMICOLON  {   // Unfor
                                                                     }
 ;
 
-expression:       value { $$ = $1; }
-                | expression operator expression { $$ = new BinaryExpressionAST(LLVMResources,
-                                                                                $2,
+condition:        expression TOKEN_EQUALITY expression  { $$ = new ConditionAST(LLVMResources,
                                                                                 std::unique_ptr<AST>($1),
-                                                                                std::unique_ptr<AST>($3)); }
+                                                                                std::unique_ptr<AST>($3));
+                                                        }
+;
+
+expression:       value { $$ = $1; }
+                | expression operator expression    { $$ = new BinaryExpressionAST(LLVMResources,
+                                                                                   $2,
+                                                                                   std::unique_ptr<AST>($1),
+                                                                                   std::unique_ptr<AST>($3));
+                                                    }
 ;
 
 operator:       TOKEN_MULTIPLICATION { $$ = $1; }
