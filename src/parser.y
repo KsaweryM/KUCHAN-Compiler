@@ -10,6 +10,7 @@
     #include "include/ConditionAST.hpp"
     #include "include/PrintCommandAST.hpp"
     #include "include/VariableAST.hpp"
+    #include "include/WhileCommandAST.hpp"
     #include <llvm/IR/Verifier.h>
     #include <iostream>
     #include <string>
@@ -44,8 +45,11 @@
 %token <token>             TOKEN_VAR
 %token <token>             TOKEN_BEGIN
 %token <token>             TOKEN_PRINT
-%token <token>             LEFT_BRACKET
-%token <token>             RIGHT_BRACKET
+%token <token>             TOKEN_WHILE
+%token <token>             TOKEN_WHILE_BODY_BEGIN
+%token <token>             TOKEN_WHILE_BODY_END
+%token <token>             TOKEN_LEFT_BRACKET
+%token <token>             TOKEN_RIGHT_BRACKET
 %token <token>             TOKEN_COMMA
 %token <token>             TOKEN_SEMICOLON
 %token <token>             TOKEN_EQUALITY
@@ -69,8 +73,8 @@
 
 %%
 
-program:          TOKEN_VAR declarations TOKEN_BEGIN commands TOKEN_END { $4->parse(); }
-                | TOKEN_BEGIN commands TOKEN_END { $2->parse(); }
+program:          TOKEN_VAR declarations TOKEN_BEGIN commands TOKEN_END { $4->parse(); delete $4; }
+                | TOKEN_BEGIN commands TOKEN_END { $2->parse(); delete $2; }
 ;
 
 declarations:     declarations TOKEN_COMMA TOKEN_VARIABLE_NAME { }
@@ -90,9 +94,12 @@ commands:         command           {   CommandsAST* commandsAST = new CommandsA
 
 ;
 
-command:          TOKEN_PRINT value TOKEN_SEMICOLON
-                                                                    {   $$ = new PrintCommandAST(LLVMResources,
-                                                                                   std::unique_ptr<AST>($2));
+command:          TOKEN_PRINT
+                    TOKEN_LEFT_BRACKET
+                      value
+                    TOKEN_RIGHT_BRACKET
+                  TOKEN_SEMICOLON                                   {   $$ = new PrintCommandAST(LLVMResources,
+                                                                                   std::unique_ptr<AST>($3));
                                                                     }
                 | variable TOKEN_ASSIGN expression TOKEN_SEMICOLON  {   // Unfortunately, due to the LLVM configuration,
                                                                         // the use of dynamic_cast is blocked.
@@ -101,7 +108,11 @@ command:          TOKEN_PRINT value TOKEN_SEMICOLON
                                                                                    std::unique_ptr<VariableAST>(reinterpret_cast<VariableAST*>($1)),
                                                                                    std::unique_ptr<BinaryExpressionAST>(reinterpret_cast<BinaryExpressionAST*>($3)));
                                                                     }
-                | TOKEN_IF condition TOKEN_THEN
+                | TOKEN_IF
+                    TOKEN_LEFT_BRACKET
+                      condition
+                    TOKEN_RIGHT_BRACKET
+                    TOKEN_THEN
                     commands
                   TOKEN_ELSE
                     commands
@@ -110,8 +121,22 @@ command:          TOKEN_PRINT value TOKEN_SEMICOLON
                                                                         // Below is a temporary solution.
 
                                                                         $$ = new ConditionalCommandAST(LLVMResources,
-                                                                                   std::unique_ptr<ConditionAST>(reinterpret_cast<ConditionAST*>($2)),
-                                                                                   std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($4)),
+                                                                                   std::unique_ptr<ConditionAST>(reinterpret_cast<ConditionAST*>($3)),
+                                                                                   std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($6)),
+                                                                                   std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($8)));
+                                                                    }
+                | TOKEN_WHILE
+                    TOKEN_LEFT_BRACKET
+                      condition
+                    TOKEN_RIGHT_BRACKET
+                    TOKEN_WHILE_BODY_BEGIN
+                      commands
+                    TOKEN_WHILE_BODY_END                            {   // Unfortunately, due to the LLVM configuration,
+                                                                        // the use of dynamic_cast is blocked.
+                                                                        // Below is a temporary solution.
+
+                                                                        $$ = new WhileCommandAST(LLVMResources,
+                                                                                   std::unique_ptr<ConditionAST>(reinterpret_cast<ConditionAST*>($3)),
                                                                                    std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($6)));
                                                                     }
 ;
