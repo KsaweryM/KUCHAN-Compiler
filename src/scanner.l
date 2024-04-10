@@ -21,6 +21,9 @@ int yylex();
 "VAR"                { return TOKEN_VAR;                                                          }
 "BEGIN"              { return TOKEN_BEGIN;                                                        }
 "END"                { return TOKEN_END;                                                          }
+"__PRINT__"          { return TOKEN_PRINT;                                                        }
+"("                  { return LEFT_BRACKET;                                                       }
+")"                  { return RIGHT_BRACKET;                                                      }
 ","                  { return TOKEN_COMMA;                                                        }
 ";"                  { return TOKEN_SEMICOLON;                                                    }
 "=="                 { return TOKEN_EQUALITY;                                                     }

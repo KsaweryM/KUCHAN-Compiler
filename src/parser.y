@@ -7,6 +7,7 @@
     #include "include/LLVMResourcesHolder.hpp"
     #include "include/NumberAST.hpp"
     #include "include/ConditionAST.hpp"
+    #include "include/PrintCommandAST.hpp"
     #include "include/VariableAST.hpp"
     #include <llvm/IR/Verifier.h>
     #include <iostream>
@@ -41,6 +42,9 @@
 %token <token>             TOKEN_FALSE
 %token <token>             TOKEN_VAR
 %token <token>             TOKEN_BEGIN
+%token <token>             TOKEN_PRINT
+%token <token>             LEFT_BRACKET
+%token <token>             RIGHT_BRACKET
 %token <token>             TOKEN_COMMA
 %token <token>             TOKEN_SEMICOLON
 %token <token>             TOKEN_EQUALITY
@@ -76,7 +80,12 @@ commands:         commands command { }
                 | command { }
 ;
 
-command:          variable TOKEN_ASSIGN expression TOKEN_SEMICOLON  {   // Unfortunately, due to the LLVM configuration,
+command:          TOKEN_PRINT value TOKEN_SEMICOLON
+                                                                    {   $$ = new PrintCommandAST(LLVMResources,
+                                                                                std::unique_ptr<AST>($2));
+                                                                        $$->parse();
+                                                                    }
+                | variable TOKEN_ASSIGN expression TOKEN_SEMICOLON  {   // Unfortunately, due to the LLVM configuration,
                                                                         // the use of dynamic_cast is blocked.
                                                                         // Below is a temporary solution.
                                                                         $$ = new AssignCommandAST(LLVMResources,

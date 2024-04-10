@@ -19,3 +19,7 @@ clean:
 
 run: build/KUCHAN
 	./build/KUCHAN
+
+compile:
+	llc build/main.ll -o build/main.s
+	gcc -no-pie build/main.s -o build/main.out
