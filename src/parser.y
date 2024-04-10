@@ -3,6 +3,7 @@
     #include "include/AssignCommandAST.hpp"
     #include "include/BinaryExpressionAST.hpp"
     #include "include/CommandAST.hpp"
+    #include "include/CommandsAST.hpp"
     #include "include/ConditionalCommandAST.hpp"
     #include "include/LLVMResourcesHolder.hpp"
     #include "include/NumberAST.hpp"
@@ -68,56 +69,64 @@
 
 %%
 
-program:          TOKEN_VAR declarations TOKEN_BEGIN commands TOKEN_END { }
-                | TOKEN_BEGIN commands TOKEN_END { }
+program:          TOKEN_VAR declarations TOKEN_BEGIN commands TOKEN_END { $4->parse(); }
+                | TOKEN_BEGIN commands TOKEN_END { $2->parse(); }
 ;
 
 declarations:     declarations TOKEN_COMMA TOKEN_VARIABLE_NAME { }
                 | TOKEN_VARIABLE_NAME { }
 ;
 
-commands:         commands command { }
-                | command { }
+commands:         command           {   CommandsAST* commandsAST = new CommandsAST(LLVMResources);
+                                        commandsAST->add_command(std::unique_ptr<CommandAST>($1));
+                                        $$ = commandsAST;
+                                    }
+                | commands command  {   // Unfortunately, due to the LLVM configuration,
+                                        // the use of dynamic_cast is blocked.
+                                        // Below is a temporary solution.
+
+                                        reinterpret_cast<CommandsAST*>($1)->add_command(std::unique_ptr<CommandAST>($2));
+                                    }
+
 ;
 
 command:          TOKEN_PRINT value TOKEN_SEMICOLON
                                                                     {   $$ = new PrintCommandAST(LLVMResources,
-                                                                                std::unique_ptr<AST>($2));
-                                                                        $$->parse();
+                                                                                   std::unique_ptr<AST>($2));
                                                                     }
                 | variable TOKEN_ASSIGN expression TOKEN_SEMICOLON  {   // Unfortunately, due to the LLVM configuration,
                                                                         // the use of dynamic_cast is blocked.
                                                                         // Below is a temporary solution.
                                                                         $$ = new AssignCommandAST(LLVMResources,
-                                                                            std::unique_ptr<VariableAST>(reinterpret_cast<VariableAST*>($1)),
-                                                                            std::unique_ptr<BinaryExpressionAST>(reinterpret_cast<BinaryExpressionAST*>($3)));
-
-                                                                        $$->parse();
+                                                                                   std::unique_ptr<VariableAST>(reinterpret_cast<VariableAST*>($1)),
+                                                                                   std::unique_ptr<BinaryExpressionAST>(reinterpret_cast<BinaryExpressionAST*>($3)));
                                                                     }
                 | TOKEN_IF condition TOKEN_THEN
-                    command
+                    commands
                   TOKEN_ELSE
-                    command
-                  TOKEN_END_IF                                      {   $$ = new ConditionalCommandAST(LLVMResources,
-                                                                            std::unique_ptr<ConditionAST>(reinterpret_cast<ConditionAST*>($2)),
-                                                                            std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($4)),
-                                                                            std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($6)));
+                    commands
+                  TOKEN_END_IF                                      {   // Unfortunately, due to the LLVM configuration,
+                                                                        // the use of dynamic_cast is blocked.
+                                                                        // Below is a temporary solution.
 
-                                                                        $$->parse();
+                                                                        $$ = new ConditionalCommandAST(LLVMResources,
+                                                                                   std::unique_ptr<ConditionAST>(reinterpret_cast<ConditionAST*>($2)),
+                                                                                   std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($4)),
+                                                                                   std::unique_ptr<CommandAST>(reinterpret_cast<CommandAST*>($6)));
                                                                     }
 ;
 
 condition:        expression TOKEN_EQUALITY expression  { $$ = new ConditionAST(LLVMResources,
-                                                                                std::unique_ptr<AST>($1),
-                                                                                std::unique_ptr<AST>($3));
+                                                                     std::unique_ptr<AST>($1),
+                                                                     std::unique_ptr<AST>($3));
                                                         }
 ;
 
 expression:       value { $$ = $1; }
                 | expression operator expression    { $$ = new BinaryExpressionAST(LLVMResources,
-                                                                                   $2,
-                                                                                   std::unique_ptr<AST>($1),
-                                                                                   std::unique_ptr<AST>($3));
+                                                                 $2,
+                                                                 std::unique_ptr<AST>($1),
+                                                                 std::unique_ptr<AST>($3));
                                                     }
 ;
 
